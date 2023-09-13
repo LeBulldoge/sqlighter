@@ -1,4 +1,4 @@
-package database
+package sqlighter
 
 import (
 	"context"
