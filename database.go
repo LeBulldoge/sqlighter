@@ -11,10 +11,14 @@ import (
 	_ "modernc.org/sqlite"
 )
 
+type VersionMap = schema.VersionMap
+type Migration = schema.Migration
+type Tx = sqlx.Tx
+
 type DB struct {
 	db            *sqlx.DB
 	targetVersion int
-	versionMap    schema.VersionMap
+	versionMap    VersionMap
 }
 
 func New(targetVersion int) *DB {
