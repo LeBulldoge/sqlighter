@@ -46,7 +46,7 @@ func (m *DB) Open(ctx context.Context) error {
 
 	m.db = db
 
-	err = m.Tx(ctx, func(ctx context.Context, tx *sqlx.Tx) error {
+	err = m.Tx(ctx, func(ctx context.Context, tx *Tx) error {
 		curVersion, err := schema.CurrentVersion(ctx, tx)
 		if err != nil {
 			return err
@@ -80,7 +80,7 @@ func (m *DB) Close() error {
 	return m.db.Close()
 }
 
-func (m *DB) Tx(ctx context.Context, f func(context.Context, *sqlx.Tx) error) error {
+func (m *DB) Tx(ctx context.Context, f func(context.Context, *Tx) error) error {
 	tx, err := m.db.BeginTxx(ctx, nil)
 
 	if err != nil {
