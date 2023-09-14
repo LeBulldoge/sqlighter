@@ -19,8 +19,11 @@ type DB struct {
 	versionMap    schema.VersionMap
 }
 
-func New(targetVersion int) *DB {
-	return &DB{targetVersion: targetVersion}
+func New(targetVersion int, versionMap schema.VersionMap) *DB {
+	return &DB{
+		targetVersion: targetVersion,
+		versionMap:    versionMap,
+	}
 }
 
 func (m *DB) Open(ctx context.Context) error {
