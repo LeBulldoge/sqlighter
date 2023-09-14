@@ -55,7 +55,7 @@ func (m *DB) Open(ctx context.Context) error {
 		needSchemaUpdate := curVersion != m.targetVersion
 
 		if needSchemaUpdate {
-			err := schema.ApplyMigrations(ctx, tx, curVersion, m.targetVersion)
+			err := schema.ApplyMigrations(ctx, tx, m.versionMap, curVersion, m.targetVersion)
 			if err != nil {
 				return err
 			}
