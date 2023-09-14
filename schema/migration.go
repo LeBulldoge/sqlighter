@@ -9,11 +9,11 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type VersionMap map[int]func() Migration
+type VersionMap map[int]Version
 
-type Migration struct {
-	up   func(context.Context, *sqlx.Tx) error
-	down func(context.Context, *sqlx.Tx) error
+type Version struct {
+	Up   string
+	Down string
 }
 
 func CurrentVersion(ctx context.Context, tx *sqlx.Tx) (int, error) {
@@ -28,16 +28,16 @@ func setVersion(ctx context.Context, tx *sqlx.Tx, version int) error {
 	return err
 }
 
-func ApplyMigrations(ctx context.Context, tx *sqlx.Tx, fromVer int, toVer int) error {
+func ApplyMigrations(ctx context.Context, tx *sqlx.Tx, versionMap VersionMap, fromVer int, toVer int) error {
 	if fromVer == toVer {
 		return fmt.Errorf("current version: %d equals to target version: %d", fromVer, toVer)
 	}
 
 	var err error
 	if fromVer < toVer {
-		err = migrateUp(ctx, tx, fromVer, toVer)
+		err = migrateUp(ctx, tx, versionMap, fromVer, toVer)
 	} else {
-		err = migrateDown(ctx, tx, fromVer, toVer)
+		err = migrateDown(ctx, tx, versionMap, fromVer, toVer)
 	}
 
 	if err != nil {
@@ -47,15 +47,20 @@ func ApplyMigrations(ctx context.Context, tx *sqlx.Tx, fromVer int, toVer int) e
 	return setVersion(ctx, tx, toVer)
 }
 
-func migrateUp(ctx context.Context, tx *sqlx.Tx, curVersion int, targetVersion int) error {
+func runMigration(ctx context.Context, tx *sqlx.Tx, migration string) error {
+	_, err := tx.ExecContext(ctx, migration)
+	return err
+}
+
+func migrateUp(ctx context.Context, tx *sqlx.Tx, versionMap VersionMap, curVersion int, targetVersion int) error {
 	slog.Info("upgrading database schema version", "from", curVersion, "to", targetVersion)
 	for v := curVersion + 1; v <= targetVersion; v++ {
-		migration := versionMap[v]()
-		if migration.up == nil {
+		migration := versionMap[v]
+		if migration.Up == "" {
 			return fmt.Errorf("cannot migrate database further up than v%d, should never happen", v)
 		}
 
-		err := migration.up(ctx, tx)
+		err := runMigration(ctx, tx, migration.Up)
 		if err != nil {
 			return fmt.Errorf("error migrating database from v%d to v%d: %w", curVersion, v, err)
 		}
@@ -64,15 +69,15 @@ func migrateUp(ctx context.Context, tx *sqlx.Tx, curVersion int, targetVersion i
 	return nil
 }
 
-func migrateDown(ctx context.Context, tx *sqlx.Tx, curVersion int, targetVersion int) error {
+func migrateDown(ctx context.Context, tx *sqlx.Tx, versionMap VersionMap, curVersion int, targetVersion int) error {
 	slog.Info("downgrading database schema version", "from", targetVersion, "to", curVersion)
 	for v := curVersion; v > targetVersion; v-- {
-		migration := versionMap[v]()
-		if migration.down == nil {
+		migration := versionMap[v]
+		if migration.Down == "" {
 			return fmt.Errorf("cannot migrate database further down than v%d", v)
 		}
 
-		err := migration.down(ctx, tx)
+		err := runMigration(ctx, tx, migration.Down)
 		if err != nil {
 			return fmt.Errorf("error migrating database from v%d to v%d: %w", curVersion, v, err)
 		}

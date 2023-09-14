@@ -5,20 +5,18 @@ import (
 	"errors"
 	"path/filepath"
 
-	"github.com/LeBulldoge/sqlighter/os"
+	"github.com/LeBulldoge/sqlighter/internal/os"
 	"github.com/LeBulldoge/sqlighter/schema"
 	"github.com/jmoiron/sqlx"
 	_ "modernc.org/sqlite"
 )
 
-type VersionMap = schema.VersionMap
-type Migration = schema.Migration
 type Tx = sqlx.Tx
 
 type DB struct {
 	db            *sqlx.DB
 	targetVersion int
-	versionMap    VersionMap
+	versionMap    schema.VersionMap
 }
 
 func New(targetVersion int) *DB {
