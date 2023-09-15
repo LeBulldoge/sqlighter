@@ -15,19 +15,26 @@ type Tx = sqlx.Tx
 
 type DB struct {
 	db            *sqlx.DB
+	configDir     string
 	targetVersion int
 	versionMap    schema.VersionMap
 }
 
-func New(targetVersion int, versionMap schema.VersionMap) *DB {
+func New(configDir string, targetVersion int, versionMap schema.VersionMap) *DB {
 	return &DB{
+		configDir:     configDir,
 		targetVersion: targetVersion,
 		versionMap:    versionMap,
 	}
 }
 
 func (m *DB) Open(ctx context.Context) error {
-	config := os.ConfigPath()
+	var config string
+	if m.configDir != "" {
+		config = m.configDir
+	} else {
+		config = os.ConfigPath()
+	}
 	dbPath := filepath.Join(config, "storage.db")
 
 	if !os.FileExists(dbPath) {
