@@ -3,7 +3,9 @@ package sqlighter
 import (
 	"context"
 	"errors"
+	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/LeBulldoge/sqlighter/internal/os"
 	"github.com/LeBulldoge/sqlighter/schema"
@@ -51,14 +53,6 @@ func (m *DB) Open(ctx context.Context, pragmas ...string) error {
 
 	db.SetMaxOpenConns(1)
 
-	for _, pragma := range pragmas {
-		_, err = db.ExecContext(ctx, "PRAGMA "+pragma)
-		if err != nil {
-			db.Close()
-			return err
-		}
-	}
-
 	m.db = db
 
 	err = m.Tx(ctx, func(ctx context.Context, tx *Tx) error {
@@ -80,7 +74,16 @@ func (m *DB) Open(ctx context.Context, pragmas ...string) error {
 	})
 
 	if err != nil {
+		m.db.Close()
 		return err
+	}
+
+	for _, pragma := range pragmas {
+		_, err = m.db.ExecContext(ctx, "PRAGMA "+pragma)
+		if err != nil {
+			m.db.Close()
+			return err
+		}
 	}
 
 	return nil
