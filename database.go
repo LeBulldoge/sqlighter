@@ -28,7 +28,7 @@ func New(configDir string, targetVersion int, versionMap schema.VersionMap) *DB 
 	}
 }
 
-func (m *DB) Open(ctx context.Context) error {
+func (m *DB) Open(ctx context.Context, pragmas ...string) error {
 	var config string
 	if m.configDir != "" {
 		config = m.configDir
@@ -50,6 +50,14 @@ func (m *DB) Open(ctx context.Context) error {
 	}
 
 	db.SetMaxOpenConns(1)
+
+	for _, pragma := range pragmas {
+		_, err = db.ExecContext(ctx, "PRAGMA "+pragma)
+		if err != nil {
+			db.Close()
+			return err
+		}
+	}
 
 	m.db = db
 
