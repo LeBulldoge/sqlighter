@@ -3,9 +3,7 @@ package sqlighter
 import (
 	"context"
 	"errors"
-	"fmt"
 	"path/filepath"
-	"strings"
 
 	"github.com/LeBulldoge/sqlighter/internal/os"
 	"github.com/LeBulldoge/sqlighter/schema"
