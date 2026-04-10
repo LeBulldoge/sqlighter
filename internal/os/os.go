@@ -7,7 +7,7 @@ import (
 
 func ConfigPath() string {
 	config, _ := os.UserConfigDir()
-	path := filepath.Join(config, "gungus")
+	path := filepath.Join(config, "sqlighter")
 
 	return path
 }
