@@ -34,6 +34,9 @@ func FromFS(fsys fs.ReadDirFS, dir string) (VersionMap, error) {
 		}
 		name = strings.TrimSuffix(name, ".sql")
 		parts := strings.Split(name, "_")
+		if len(parts) < 2 {
+			return nil, fmt.Errorf("invalid migration file format: %s (expected: 000_name_up/down.sql", entry.Name())
+		}
 
 		path := filepath.Join(dir, entry.Name())
 
