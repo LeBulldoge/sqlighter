@@ -62,7 +62,7 @@ func migrateUp(ctx context.Context, tx *sqlx.Tx, versionMap VersionMap, curVersi
 
 		err := runMigration(ctx, tx, migration.Up)
 		if err != nil {
-			return fmt.Errorf("error migrating database from v%d to v%d: %w", curVersion, v, err)
+			return fmt.Errorf("error migrating database from v%d to v%d: %w", v-1, v, err)
 		}
 	}
 
@@ -70,7 +70,7 @@ func migrateUp(ctx context.Context, tx *sqlx.Tx, versionMap VersionMap, curVersi
 }
 
 func migrateDown(ctx context.Context, tx *sqlx.Tx, versionMap VersionMap, curVersion int, targetVersion int) error {
-	slog.Info("downgrading database schema version", "from", targetVersion, "to", curVersion)
+	slog.Info("downgrading database schema version", "from", curVersion, "to", targetVersion)
 	for v := curVersion; v > targetVersion; v-- {
 		migration := versionMap[v]
 		if migration.Down == "" {
@@ -79,7 +79,7 @@ func migrateDown(ctx context.Context, tx *sqlx.Tx, versionMap VersionMap, curVer
 
 		err := runMigration(ctx, tx, migration.Down)
 		if err != nil {
-			return fmt.Errorf("error migrating database from v%d to v%d: %w", curVersion, v, err)
+			return fmt.Errorf("error migrating database from v%d to v%d: %w", v, v-1, err)
 		}
 	}
 
