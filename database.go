@@ -5,7 +5,7 @@ import (
 	"errors"
 	"path/filepath"
 
-	"github.com/LeBulldoge/sqlighter/internal/os"
+	internalos "github.com/LeBulldoge/sqlighter/internal/os"
 	"github.com/LeBulldoge/sqlighter/schema"
 	"github.com/jmoiron/sqlx"
 	_ "modernc.org/sqlite"
@@ -16,6 +16,8 @@ type Tx = sqlx.Tx
 type DB struct {
 	db            *sqlx.DB
 	configDir     string
+	filename      string
+	maxOpenConns  int
 	targetVersion int
 	versionMap    schema.VersionMap
 }
@@ -23,24 +25,39 @@ type DB struct {
 func New(configDir string, targetVersion int, versionMap schema.VersionMap) *DB {
 	return &DB{
 		configDir:     configDir,
+		filename:      "storage.db",
+		maxOpenConns:  1,
 		targetVersion: targetVersion,
 		versionMap:    versionMap,
 	}
 }
 
-func (m *DB) Open(ctx context.Context, pragmas ...string) error {
-	var config string
-	if m.configDir != "" {
-		config = m.configDir
-	} else {
-		config = os.ConfigPath()
-	}
-	dbPath := filepath.Join(config, "storage.db")
+func (m *DB) SetFilename(filename string) {
+	m.filename = filename
+}
 
-	if !os.FileExists(dbPath) {
-		err := os.CreateFile(dbPath)
-		if err != nil {
-			return err
+func (m *DB) SetMaxOpenConns(n int) {
+	m.maxOpenConns = n
+}
+
+func (m *DB) Open(ctx context.Context, pragmas ...string) error {
+	var dbPath string
+	if m.configDir == ":memory:" {
+		dbPath = ":memory:"
+	} else {
+		var config string
+		if m.configDir != "" {
+			config = m.configDir
+		} else {
+			config = internalos.ConfigPath()
+		}
+		dbPath = filepath.Join(config, m.filename)
+
+		if !internalos.FileExists(dbPath) {
+			err := internalos.CreateFile(dbPath)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -49,7 +66,7 @@ func (m *DB) Open(ctx context.Context, pragmas ...string) error {
 		return err
 	}
 
-	db.SetMaxOpenConns(1)
+	db.SetMaxOpenConns(m.maxOpenConns)
 
 	m.db = db
 
@@ -88,6 +105,10 @@ func (m *DB) Open(ctx context.Context, pragmas ...string) error {
 }
 
 func (m *DB) Close() error {
+	if m.db == nil {
+		return nil
+	}
+
 	_, err := m.db.Exec("PRAGMA optimize")
 	if err != nil {
 		return err
