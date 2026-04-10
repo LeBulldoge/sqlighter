@@ -87,7 +87,6 @@ func (m *DB) Open(ctx context.Context, pragmas ...string) error {
 
 		return nil
 	})
-
 	if err != nil {
 		m.db.Close()
 		return err
@@ -119,7 +118,6 @@ func (m *DB) Close() error {
 
 func (m *DB) Tx(ctx context.Context, f func(context.Context, *Tx) error) error {
 	tx, err := m.db.BeginTxx(ctx, nil)
-
 	if err != nil {
 		return err
 	}
