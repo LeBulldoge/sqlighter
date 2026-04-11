@@ -48,7 +48,7 @@ func (m *DB) Open(ctx context.Context, pragmas ...string) error {
 		if m.configDir != "" {
 			dbPath = filepath.Join(m.configDir, m.filename)
 		} else {
-			dbPath = m.configDir
+			dbPath = m.filename
 		}
 
 		if !internalos.FileExists(dbPath) {
