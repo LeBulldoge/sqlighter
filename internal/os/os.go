@@ -5,13 +5,6 @@ import (
 	"path/filepath"
 )
 
-func ConfigPath() string {
-	config, _ := os.UserConfigDir()
-	path := filepath.Join(config, "sqlighter")
-
-	return path
-}
-
 func FileExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
