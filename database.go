@@ -45,16 +45,14 @@ func (m *DB) Open(ctx context.Context, pragmas ...string) error {
 	if m.configDir == ":memory:" {
 		dbPath = ":memory:"
 	} else {
-		if m.configDir != "" {
-			dbPath = filepath.Join(m.configDir, m.filename)
-		} else {
-			dbPath = m.filename
-		}
+		dbPath = filepath.Join(m.configDir, m.filename)
 
-		if !internalos.FileExists(dbPath) {
-			err := internalos.CreateFile(dbPath)
-			if err != nil {
-				return err
+		if m.configDir != "" {
+			if !internalos.FileExists(dbPath) {
+				err := internalos.CreateFile(dbPath)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
